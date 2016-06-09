@@ -1,0 +1,197 @@
+<html>
+    <head>
+        <title>Canvas</title>
+    </head>
+    <body onload="draw();">
+        <canvas id="tutorial" width="1204" height="898"></canvas>
+        <canvas id="ball" width="200" height="898"></canvas>
+    </body>
+</html>
+
+<script type="text/javascript">
+    function draw() {
+        balls();
+        var canvas = document.getElementById('tutorial');
+        if (canvas.getContext){
+            var ctx = canvas.getContext('2d');
+            var boardWidth = 45;
+            var boardHeight = 35;
+            var boxSize = 20;
+            var game_loop;
+            var score = 0;
+
+            var snake;
+            var food;
+            var direction;
+
+            init();
+
+
+            function init() {
+                drawWalls();
+                createSnake();
+                spawnFood();
+
+                game_loop = null;
+                game_loop = setInterval(function () {
+                    drawWalls();
+                    moveSnake();
+                    drawWorld();
+                }, 60);
+            }
+
+
+            function drawWalls() {
+                ctx.fillStyle = "rgb(0,0,0)";
+                ctx.fillRect(100, 100, boardWidth * boxSize, boardHeight * boxSize);
+            }
+
+            function createSnake() {
+                var length = 12;
+                snake = [];
+                for(var i = length - 1; i >= 0; i--) {
+                    snake.push({x: i, y: 0});
+                }
+                direction = 'left';
+            }
+
+            function spawnFood() {
+                food = {
+                    x: Math.floor(Math.random() * (boardWidth)),
+                    y: Math.floor(Math.random() * (boardHeight))
+                }
+            }
+
+
+            function drawWorld() {
+                // Draw food
+                ctx.fillStyle = "rgb(255,255,0)";
+                ctx.fillRect(food.x*boxSize  + 100, food.y*boxSize + 100, boxSize, boxSize);
+
+
+                ctx.fillStyle = "rgb(0,255,255)";
+                for (var i = 0; i < snake.length; i++) {
+                    ctx.fillRect(snake[i].x*boxSize  + 100, snake[i].y*boxSize  + 100, boxSize, boxSize);
+                }
+            }
+
+            function moveSnake() {
+                var headX = snake[0].x;
+                var headY = snake[0].y;
+
+                if (direction == "right") headX--;
+                else if (direction == "left") headX++;
+                else if (direction == "up") headY--;
+                else if (direction == "down") headY++;
+
+                if (checkCollision(headX, headY)) {
+                    alert('Game Over!');
+                    clearInterval(game_loop);
+                    return;
+                } else {
+                    if (hasEaten(headX, headY)) {
+                        snake.unshift({x: headX, y: headY});
+                        spawnFood();
+                        score++;
+                    } else {
+                        snake.unshift({x: headX, y: headY});
+                        box = snake.pop();
+                    }
+                }   
+                showScore();
+            }
+
+            function showScore () {
+                ctx.font = "30px Comic Sans MS";
+                ctx.fillStyle = "red";
+                ctx.textAlign = "center";
+                ctx.fillText('SCORE: ' + score, canvas.width/4, canvas.height/2); 
+            }
+
+
+            function checkCollision(x, y) {
+                if (x < 0 || x >= boardWidth || y < 0 || y >= boardHeight) {
+                    return true;
+                }
+
+                for(var i = 0; i < snake.length; i++) {
+                    if (snake[i].x == x && snake[i].y == y)
+                     return true;
+                }
+                return false;
+            }
+
+
+            function hasEaten(x, y) {
+                var eaten = x==food.x && y==food.y;
+                return eaten;
+            }
+
+            document.onkeydown = function(e) {
+                e = e || window.event;
+
+                if (e.keyCode == '38' && direction != 'down') {
+                    direction = 'up'
+                }
+                else if (e.keyCode == '40' && direction != 'up') {
+                    direction = 'down'
+                }
+                else if (e.keyCode == '39' && direction != 'right') {
+                    direction = 'left'
+                }
+                else if (e.keyCode == '37' && direction != 'left') {
+                    direction = 'right'
+                }
+            }
+        }
+    }
+
+    function balls() {
+        var canvas = document.getElementById('ball');
+        var ctx = canvas.getContext('2d');
+        var raf;
+
+        var ball = {
+            x: 100,
+            y: 100,
+            vx: 0,
+            vy: 2,
+            radius: 25,
+            color: 'blue',
+            draw: function() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2, true);
+                ctx.closePath();
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+        };
+
+        function draw() {
+            ctx.clearRect(0,0, canvas.width, canvas.height);
+            ball.draw();
+            ball.x += ball.vx;
+            ball.y += ball.vy;
+            ball.vy *= .99;
+            ball.vy += .25;
+
+            if (ball.y + ball.vy > canvas.height - 100 || ball.y + ball.vy < 0) {
+                ball.vy = -ball.vy;
+            }
+            if (ball.x + ball.vx > canvas.width || ball.x + ball.vx < 0) {
+                ball.vx = -ball.vx;
+            }
+            raf = window.requestAnimationFrame(draw);
+        }
+
+        canvas.addEventListener('mouseover', function(e){
+            raf = window.requestAnimationFrame(draw);
+        });
+
+        // canvas.addEventListener("mouseout",function(e){
+        //     window.cancelAnimationFrame(raf);
+        // });
+
+        ball.draw();
+    }
+</script>
